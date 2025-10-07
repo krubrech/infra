@@ -39,11 +39,11 @@
         ./modules/base.nix
         ./modules/trusted-keys.nix
         ./modules/users.nix
-        ./modules/nixbuild.nix
         ./hosts/rabbit/disk.nix
         ./hosts/rabbit/hardware-configuration.nix
         ./hosts/rabbit/configuration.nix
       ];
+      # ./modules/nixbuild.nix
 
       # Add more servers here…
       # home-lab-1 = mkHost "home-lab-1" "aarch64-linux" [ ... ];
