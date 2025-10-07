@@ -26,7 +26,8 @@ case "$MODE" in
     echo "Building and testing rabbit configuration on $HOST (won't persist)..."
     nixos-rebuild test --flake .#rabbit \
       --target-host "$HOST" \
-      --build-host "$HOST"
+      --build-host "$HOST" \
+      --verbose
     echo "Test deployment complete! Changes active but won't survive reboot."
     ;;
   *)
