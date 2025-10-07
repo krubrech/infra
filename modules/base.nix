@@ -6,6 +6,6 @@
     services.resolved.enable = true;
     security.sudo.wheelNeedsPassword = false;
     environment.systemPackages = with pkgs; [ htop git vim tmux ];
-    system.stateVersion = "24.05";
+    system.stateVersion = "25.05";
   };
 }
