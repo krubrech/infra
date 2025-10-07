@@ -2,7 +2,7 @@
   description = "General infra for all projects & servers";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     disko.url   = "github:nix-community/disko";
     sops-nix.url = "github:Mic92/sops-nix";
 
