@@ -13,6 +13,9 @@
   # Automatically load all trusted SSH keys
   profiles.trustedKeys.enable = true;
 
+  # Enable users with trusted SSH keys
+  profiles.users.enable = true;
+
   # Enable graphical environment
   services.xserver = {
     enable = true;
