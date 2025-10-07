@@ -26,6 +26,9 @@
   # Base profile
   profiles.base.enable = true;
 
+  # nixbuild.net remote builders
+  services.nixbuild.enable = true;
+
   # Additional graphical packages
   environment.systemPackages = with pkgs; [
     firefox

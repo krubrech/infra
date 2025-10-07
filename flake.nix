@@ -39,6 +39,7 @@
         ./modules/base.nix
         ./modules/trusted-keys.nix
         ./modules/users.nix
+        ./modules/nixbuild.nix
         ./hosts/rabbit/disk.nix
         ./hosts/rabbit/hardware-configuration.nix
         ./hosts/rabbit/configuration.nix
