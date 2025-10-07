@@ -15,14 +15,13 @@ in
       isNormalUser = true;
       extraGroups = [ "wheel" "networkmanager" ];
       openssh.authorizedKeys.keys = publicKeys;
-      # Password will be set via sops (NixOS will hash it automatically)
-      passwordFile = config.sops.secrets.klaus-password.path;
+      # Initial password (plaintext, will be hashed automatically)
+      initialPassword = builtins.readFile config.sops.secrets.klaus-password.path;
     };
 
     # Configure sops secret for klaus password
     sops.secrets.klaus-password = {
       sopsFile = ../secrets/secrets.yaml;
-      neededForUsers = true;
     };
   };
 }
