@@ -26,7 +26,6 @@
         disko.nixosModules.disko
         sops-nix.nixosModules.sops
         ./modules/base.nix
-        ./modules/users.nix
         ./modules/nginx.nix
         ./modules/apps.nix
         ./hosts/hetzner-pony/disk.nix

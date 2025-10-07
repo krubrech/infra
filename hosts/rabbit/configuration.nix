@@ -20,25 +20,29 @@
     displayManager.lightdm.enable = true;
   };
 
-  # Enable VNC for remote graphical access
-  services.x11vnc = {
-    enable = true;
-    viewonly = false;
-    auth = "/var/run/lightdm/root/:0";
-    display = ":0";
-    findauth = "guess";
-    rfbport = 5900;
-  };
-
-  # Open VNC port in firewall
-  networking.firewall.allowedTCPPorts = [ 5900 ];
-
   # Base profile
   profiles.base.enable = true;
 
   # Additional graphical packages
   environment.systemPackages = with pkgs; [
     firefox
-    x11vnc
+    tigervnc
   ];
+
+  # VNC server systemd service
+  systemd.services.vncserver = {
+    description = "VNC Server";
+    after = [ "display-manager.service" ];
+    wantedBy = [ "multi-user.target" ];
+
+    serviceConfig = {
+      Type = "forking";
+      User = "root";
+      ExecStart = "${pkgs.tigervnc}/bin/x0vncserver -display :0 -rfbport 5900 -SecurityTypes None";
+      Restart = "on-failure";
+    };
+  };
+
+  # Open VNC port in firewall
+  networking.firewall.allowedTCPPorts = [ 5900 ];
 }

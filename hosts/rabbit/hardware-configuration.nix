@@ -6,6 +6,7 @@
     enable = true;
     efiSupport = true;
     efiInstallAsRemovable = true;
+    device = "nodev";
   };
 
   boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci" "virtio_scsi" "sd_mod" "sr_mod" ];
