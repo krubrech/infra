@@ -12,24 +12,21 @@ case "$MODE" in
     echo "Building and activating rabbit configuration on $HOST..."
     nixos-rebuild switch --flake .#rabbit \
       --target-host "$HOST" \
-      --build-host "$HOST" \
-      --fast
+      --build-host "$HOST"
     echo "Deployment complete! Changes are active."
     ;;
   boot)
     echo "Building and staging rabbit configuration on $HOST..."
     nixos-rebuild boot --flake .#rabbit \
       --target-host "$HOST" \
-      --build-host "$HOST" \
-      --fast
+      --build-host "$HOST"
     echo "Configuration staged! Reboot to activate. If SSH fails, use rescue mode to rollback."
     ;;
   test)
     echo "Building and testing rabbit configuration on $HOST (won't persist)..."
     nixos-rebuild test --flake .#rabbit \
       --target-host "$HOST" \
-      --build-host "$HOST" \
-      --fast
+      --build-host "$HOST"
     echo "Test deployment complete! Changes active but won't survive reboot."
     ;;
   *)
