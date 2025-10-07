@@ -15,13 +15,14 @@ in
       isNormalUser = true;
       extraGroups = [ "wheel" "networkmanager" ];
       openssh.authorizedKeys.keys = publicKeys;
-      # Initial password (plaintext, will be hashed automatically)
-      initialPassword = builtins.readFile config.sops.secrets.klaus-password.path;
+      # Hashed password will be set from sops at runtime
+      hashedPasswordFile = config.sops.secrets.klaus-password.path;
     };
 
-    # Configure sops secret for klaus password
+    # Configure sops secret for klaus password (must be hashed with mkpasswd -m sha-512)
     sops.secrets.klaus-password = {
       sopsFile = ../secrets/secrets.yaml;
+      neededForUsers = true;
     };
   };
 }
