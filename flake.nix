@@ -2,7 +2,7 @@
   description = "General infra for all projects & servers";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     disko.url   = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
@@ -52,6 +52,7 @@
     };
 
     # VM for testing rabbit configuration
-    packages.x86_64-linux.rabbit-vm = self.nixosConfigurations.rabbit.config.system.build.vm;
+    packages.x86_64-linux.rabbit-vm =
+      self.nixosConfigurations.rabbit.config.system.build.vmWithBootLoader;
   };
 }
