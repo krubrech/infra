@@ -50,5 +50,8 @@
       # Add more servers here…
       # home-lab-1 = mkHost "home-lab-1" "aarch64-linux" [ ... ];
     };
+
+    # VM for testing rabbit configuration
+    packages.x86_64-linux.rabbit-vm = self.nixosConfigurations.rabbit.config.system.build.vm;
   };
 }
