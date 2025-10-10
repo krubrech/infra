@@ -41,7 +41,7 @@ in
     };
 
     # Configure sops secret for GitHub SSH key
-    sops.secrets.github-ssh-key = {
+    sops.secrets.github-krubrech-rabbit-ssh-key = {
       sopsFile = ../secrets/secrets.yaml;
       owner = "klaus";
       group = "users";
