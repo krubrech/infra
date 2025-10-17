@@ -7,13 +7,18 @@
     disko.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager.url = "github:nix-community/home-manager/release-24.11";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    nixfiles.url = "github:krubrech/nixfiles";
+    nixfiles.inputs.nixpkgs.follows = "nixpkgs";
+    nixfiles.inputs.home-manager.follows = "home-manager";
 
     # Optional project flakes (declare as many as you want; can be private via SSH)
     # inputs.my-phx-app.url = "github:YOUR_ORG/phoenix-app";
     # inputs.nextjs-site.url = "github:YOUR_ORG/nextjs-site";
   };
 
-  outputs = { self, nixpkgs, disko, sops-nix, ... }@inputs:
+  outputs = { self, nixpkgs, disko, sops-nix, home-manager, nixfiles, ... }@inputs:
   let
     systems = [ "x86_64-linux" "aarch64-linux" ];
     lib = nixpkgs.lib;
@@ -38,6 +43,7 @@
       rabbit = mkHost "rabbit" "x86_64-linux" [
         disko.nixosModules.disko
         sops-nix.nixosModules.sops
+        home-manager.nixosModules.home-manager
         ./modules/base.nix
         ./modules/trusted-keys.nix
         ./modules/users.nix
