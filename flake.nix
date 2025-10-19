@@ -9,7 +9,7 @@
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-24.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    nixfiles.url = "github:krubrech/nixfiles";
+    nixfiles.url = "git+ssh://git@github.com/krubrech/nixfiles.git?shallow=1";
     nixfiles.inputs.nixpkgs.follows = "nixpkgs";
     nixfiles.inputs.home-manager.follows = "home-manager";
 

@@ -19,21 +19,6 @@ in
       hashedPasswordFile = config.sops.secrets.klaus-password.path;
     };
 
-    # Deploy SSH key to klaus home directory (needed to clone nixfiles)
-    systemd.tmpfiles.rules = [
-      "d /home/klaus/.ssh 0700 klaus users -"
-      "L+ /home/klaus/.ssh/github - - - - ${config.sops.secrets.github-krubrech-rabbit-ssh-key.path}"
-    ];
-
-    # Configure SSH to use the github key for GitHub (system-wide for nix-daemon)
-    programs.ssh.extraConfig = ''
-      Host github.com
-        HostName github.com
-        User git
-        IdentityFile ${config.sops.secrets.github-krubrech-rabbit-ssh-key.path}
-        IdentitiesOnly yes
-    '';
-
     # Configure home-manager for klaus user
     home-manager.useGlobalPkgs = true;
     home-manager.useUserPackages = true;
