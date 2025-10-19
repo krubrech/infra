@@ -47,7 +47,7 @@
     serviceConfig = {
       Type = "forking";
       User = "root";
-      ExecStart = "${pkgs.tigervnc}/bin/x0vncserver -display :0 -rfbport 5900 -SecurityTypes None";
+      ExecStart = "${pkgs.tigervnc}/bin/x0vncserver -display :0 -rfbport 5900 -PasswordFile /root/.vnc/passwd -SecurityTypes VncAuth";
       Restart = "on-failure";
     };
   };
