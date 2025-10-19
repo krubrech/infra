@@ -2,12 +2,12 @@
   description = "General infra for all projects & servers";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     disko.url   = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
-    home-manager.url = "github:nix-community/home-manager/release-24.11";
+    home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nixfiles.url = "git+ssh://git@github.com/krubrech/nixfiles.git?shallow=1";
     nixfiles.inputs.nixpkgs.follows = "nixpkgs";
