@@ -5,6 +5,41 @@
   services.openssh.enable = true;
   users.users.root.openssh.authorizedKeys.keys = [ "YOUR@PUBKEY" ];
 
+  # WireGuard VPN configuration
+  sops.secrets.wireguard-pony-private-key = {
+    sopsFile = ../../secrets/secrets.yaml;
+  };
+
+  profiles.wireguard = {
+    enable = true;
+    address = "10.100.0.1/24";
+    privateKeyFile = config.sops.secrets.wireguard-pony-private-key.path;
+    peers = [
+      {
+        name = "rabbit";
+        publicKey = "IbkUODTxRUfUzJyApTJxVPdPco1PN6H93r5BtsG41g4=";
+        allowedIPs = [ "10.100.0.2/32" ];
+        endpoint = "rabbit:51820";
+        persistentKeepalive = 25;
+      }
+      {
+        name = "client";
+        publicKey = "yrduKgtx0oU+OdqknWjavEtxN+yECjUYMTbydxxEGRo=";
+        allowedIPs = [ "10.100.0.10/32" ];
+        persistentKeepalive = 25;
+      }
+    ];
+  };
+
+  # Firewall: Only SSH and WireGuard publicly accessible
+  # Override nginx module's firewall settings to keep HTTP/HTTPS behind VPN
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = lib.mkForce [ 22 ];  # SSH only (force override nginx's 80/443)
+    allowedUDPPorts = [ 51820 ];  # WireGuard
+    # All other services (HTTP/HTTPS) only accessible via WireGuard (trusted interface wg0)
+  };
+
   # Role toggles (reusable across hosts)
   profiles.base.enable = true;
   profiles.reverseProxy.enable = true;     # from modules/nginx.nix

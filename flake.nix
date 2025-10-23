@@ -33,6 +33,7 @@
         disko.nixosModules.disko
         sops-nix.nixosModules.sops
         ./modules/base.nix
+        ./modules/wireguard.nix
         ./modules/nginx.nix
         ./modules/apps.nix
         ./hosts/hetzner-pony/disk.nix
@@ -45,6 +46,7 @@
         sops-nix.nixosModules.sops
         home-manager.nixosModules.home-manager
         ./modules/base.nix
+        ./modules/wireguard.nix
         ./modules/trusted-keys.nix
         ./modules/users.nix
         ./hosts/rabbit/disk.nix

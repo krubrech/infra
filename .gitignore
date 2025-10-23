@@ -25,3 +25,7 @@ hardware-configuration.nix.backup
 secrets/
 *.age
 *.secret
+
+# WireGuard client configs (contain private keys)
+wireguard-client.conf
+wg*.conf
