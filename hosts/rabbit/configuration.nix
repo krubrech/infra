@@ -76,6 +76,6 @@
   services.xrdp = {
     enable = true;
     defaultWindowManager = "${pkgs.xfce.xfce4-session}/bin/xfce4-session";
-    openFirewall = true;
+    openFirewall = false;  # RDP only accessible via WireGuard
   };
 }
