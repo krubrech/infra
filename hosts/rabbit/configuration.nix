@@ -23,13 +23,14 @@
     address = "10.100.0.2/24";
     privateKeyFile = config.sops.secrets.wireguard-rabbit-private-key.path;
     peers = [
-      {
-        name = "pony";
-        publicKey = "T5ZByh79EAO0YQwr/4Mabi0TrmL81MBZKzeJLaFTdQA=";
-        allowedIPs = [ "10.100.0.1/32" ];
-        endpoint = "pony:51820";
-        persistentKeepalive = 25;
-      }
+      # Pony temporarily disabled until it's deployed
+      # {
+      #   name = "pony";
+      #   publicKey = "T5ZByh79EAO0YQwr/4Mabi0TrmL81MBZKzeJLaFTdQA=";
+      #   allowedIPs = [ "10.100.0.1/32" ];
+      #   endpoint = "pony:51820";
+      #   persistentKeepalive = 25;
+      # }
       {
         name = "client";
         publicKey = "yrduKgtx0oU+OdqknWjavEtxN+yECjUYMTbydxxEGRo=";
