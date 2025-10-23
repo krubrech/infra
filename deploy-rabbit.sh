@@ -12,25 +12,27 @@ MODE="${1:-switch}"
 if [ "$(hostname)" = "rabbit" ]; then
   echo "Running on rabbit - deploying locally"
   REMOTE_FLAGS=""
+  SUDO="sudo"
 else
   echo "Running remotely - deploying to $HOST"
   REMOTE_FLAGS="--target-host $HOST --build-host $HOST"
+  SUDO=""
 fi
 
 case "$MODE" in
   switch)
     echo "Building and activating rabbit configuration..."
-    nixos-rebuild switch --flake .#rabbit $REMOTE_FLAGS
+    $SUDO nixos-rebuild switch --flake .#rabbit $REMOTE_FLAGS
     echo "Deployment complete! Changes are active."
     ;;
   boot)
     echo "Building and staging rabbit configuration..."
-    nixos-rebuild boot --flake .#rabbit $REMOTE_FLAGS
+    $SUDO nixos-rebuild boot --flake .#rabbit $REMOTE_FLAGS
     echo "Configuration staged! Reboot to activate. If SSH fails, use rescue mode to rollback."
     ;;
   test)
     echo "Building and testing rabbit configuration (won't persist)..."
-    nixos-rebuild test --flake .#rabbit $REMOTE_FLAGS --verbose
+    $SUDO nixos-rebuild test --flake .#rabbit $REMOTE_FLAGS --verbose
     echo "Test deployment complete! Changes active but won't survive reboot."
     ;;
   *)

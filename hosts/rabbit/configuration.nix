@@ -70,6 +70,7 @@
   # Additional graphical packages
   environment.systemPackages = with pkgs; [
     firefox
+    home-manager  # CLI tool for standalone home-manager usage
   ];
 
   # RDP server configuration
