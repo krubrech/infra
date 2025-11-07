@@ -4,6 +4,11 @@
   # Import the klaus-nixos base configuration from nixfiles
   imports = [ inputs.nixfiles.homeManagerModules.klaus-nixos ];
 
+  # Prevent evaluation of i686/32-bit packages on ARM
+  nixpkgs.config = {
+    allowUnsupportedSystem = false;
+  };
+
   # Gaming-specific additions for mole
   home.packages = with pkgs; [
     # RetroArch tools and utilities

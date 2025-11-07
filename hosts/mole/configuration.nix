@@ -6,6 +6,9 @@
 
   # Prevent 32-bit package issues on ARM
   nixpkgs.hostPlatform = "aarch64-linux";
+  nixpkgs.config = {
+    allowUnsupportedSystem = false;
+  };
 
   networking.hostName = "mole";
   time.timeZone = "Europe/Brussels";

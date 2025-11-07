@@ -64,7 +64,7 @@
         ./hosts/mole/configuration.nix
         {
           # Configure home-manager for klaus and kids users on mole
-          home-manager.useGlobalPkgs = true;
+          home-manager.useGlobalPkgs = false;  # Use separate pkgs to avoid i686 evaluation on ARM
           home-manager.useUserPackages = true;
           home-manager.extraSpecialArgs = { inherit inputs; };
           home-manager.users.klaus = import ./hosts/mole/users/klaus.nix;
