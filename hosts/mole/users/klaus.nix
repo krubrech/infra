@@ -4,6 +4,9 @@
   # Import the klaus-nixos base configuration from nixfiles
   imports = [ inputs.nixfiles.homeManagerModules.klaus-nixos ];
 
+  # Override nix package for ARM compatibility
+  nix.package = lib.mkForce pkgs.nix;
+
   # Gaming-specific additions for mole
   home.packages = with pkgs; [
     # RetroArch tools and utilities

@@ -4,6 +4,9 @@
     "${modulesPath}/installer/sd-card/sd-image-aarch64.nix"
   ];
 
+  # Prevent 32-bit package issues on ARM
+  nixpkgs.hostPlatform = "aarch64-linux";
+
   networking.hostName = "mole";
   time.timeZone = "Europe/Brussels";
 
