@@ -90,12 +90,20 @@ ssh "$PI_USER" 'bash' <<'EOF'
   . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
   echo "Installing system packages to /nix/var/nix/profiles/default..."
-  sudo nix --extra-experimental-features 'nix-command flakes' profile install \
+  sudo env PATH="$PATH" nix --extra-experimental-features 'nix-command flakes' profile install \
     --profile /nix/var/nix/profiles/default \
     --file /tmp/system-packages.nix
 
-  # Make sure system packages are in PATH for all users
-  echo 'export PATH="/nix/var/nix/profiles/default/bin:$PATH"' | sudo tee -a /etc/profile.d/nix-system.sh
+  # Make sure system packages are in PATH for all users (idempotent)
+  if [ ! -f /etc/profile.d/nix-system.sh ]; then
+    cat <<'PROFILE_SCRIPT' | sudo tee /etc/profile.d/nix-system.sh
+# Add system-wide Nix packages to PATH
+if [[ ":$PATH:" != *":/nix/var/nix/profiles/default/bin:"* ]]; then
+  export PATH="/nix/var/nix/profiles/default/bin:$PATH"
+fi
+PROFILE_SCRIPT
+    sudo chmod +r /etc/profile.d/nix-system.sh
+  fi
 
   echo "System packages installed!"
 EOF
@@ -121,25 +129,43 @@ echo "Step 5/6: Setting up klaus user..."
 ssh -A "$PI_USER" 'bash' <<EOF
   AUTH_SOCK=\$SSH_AUTH_SOCK
 
+  # Clone nixfiles to /opt/nixfiles (system location)
+  # Klaus owns it and can write, others can read
+  sudo -u klaus bash -c "
+    export SSH_AUTH_SOCK=\$AUTH_SOCK
+
+    # Add GitHub to known_hosts for klaus
+    mkdir -p /home/klaus/.ssh
+    ssh-keyscan github.com >> /home/klaus/.ssh/known_hosts 2>/dev/null
+  "
+
+  # Create /opt/nixfiles and set ownership to klaus
+  sudo mkdir -p /opt/nixfiles
+  sudo chown klaus:klaus /opt/nixfiles
+
+  # Clone or update nixfiles as klaus user
   sudo -u klaus bash -c "
     export SSH_AUTH_SOCK=\$AUTH_SOCK
     . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
-    # Add GitHub to known_hosts
-    mkdir -p /home/klaus/.ssh
-    ssh-keyscan github.com >> /home/klaus/.ssh/known_hosts 2>/dev/null
-
-    # Clone nixfiles repo (using forwarded SSH agent)
-    if [ ! -d /home/klaus/nixfiles ]; then
-      git clone $KLAUS_GITHUB /home/klaus/nixfiles
+    if [ ! -d /opt/nixfiles/.git ]; then
+      git clone $KLAUS_GITHUB /opt/nixfiles
     else
-      cd /home/klaus/nixfiles && git pull
+      cd /opt/nixfiles && git pull
     fi
+  "
+
+  # Create symlink for convenience
+  sudo -u klaus ln -sfn /opt/nixfiles /home/klaus/nixfiles
+
+  # Apply klaus's home-manager config
+  sudo -u klaus bash -c "
+    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
     # Install home-manager and apply pi5-klaus config
     nix run home-manager/master -- init
     . /home/klaus/.nix-profile/etc/profile.d/hm-session-vars.sh
-    cd /home/klaus/nixfiles
+    cd /opt/nixfiles
     home-manager switch --flake .#pi5-klaus
 
     echo 'klaus home-manager configured!'
@@ -150,13 +176,16 @@ EOF
 echo ""
 echo "Step 6/6: Setting up kids user..."
 
-# Kids user will use klaus's nixfiles (no need for separate clone)
+# Kids user will use nixfiles from /opt (readable by all users)
 ssh "$PI_USER" 'sudo -u kids bash' <<'EOF'
   . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
-  # Apply pi5-kids config from klaus's nixfiles directly
+  # Mark /opt/nixfiles as a safe directory for Git (owned by different user)
+  git config --global --add safe.directory /opt/nixfiles
+
+  # Apply pi5-kids config from /opt/nixfiles (readable by all users)
   # This will install home-manager as part of the switch
-  nix run home-manager/master -- switch --flake /home/klaus/nixfiles#pi5-kids
+  nix run home-manager/master -- switch --flake /opt/nixfiles#pi5-kids
 
   echo "kids home-manager configured!"
 EOF
@@ -200,5 +229,7 @@ echo "  3. Reboot the Pi to start auto-login: ssh $PI_USER 'sudo reboot'"
 echo ""
 echo "To update configurations later:"
 echo "  - System packages: ./hosts/mole/deploy-pi.sh"
-echo "  - User configs: home-manager switch --flake ~/nixfiles#pi5-klaus"
+echo "  - Klaus config: home-manager switch --flake /opt/nixfiles#pi5-klaus"
+echo "  - Kids config (as klaus): sudo -u kids home-manager switch --flake /opt/nixfiles#pi5-kids"
+echo "  - Nixfiles are at: /opt/nixfiles (symlinked from ~/nixfiles)"
 echo ""

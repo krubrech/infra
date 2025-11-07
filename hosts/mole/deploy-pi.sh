@@ -8,7 +8,7 @@
 set -e
 
 # Configuration
-PI_USER="${1:-pi@192.168.1.219}"
+PI_USER="${1:-klaus@192.168.1.219}"
 
 echo "=================================================="
 echo "  Updating Raspberry Pi 5 System Packages"
@@ -27,7 +27,7 @@ ssh "$PI_USER" 'bash' <<'EOF'
   . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
   echo "Installing updated packages to /nix/var/nix/profiles/default..."
-  sudo nix --extra-experimental-features 'nix-command flakes' profile install \
+  sudo env PATH="$PATH" nix --extra-experimental-features 'nix-command flakes' profile install \
     --profile /nix/var/nix/profiles/default \
     --file /tmp/system-packages.nix
 
@@ -42,6 +42,6 @@ echo ""
 echo "System packages have been updated."
 echo ""
 echo "To update user configurations:"
-echo "  klaus: ssh klaus@192.168.1.219 'cd ~/nixfiles && git pull && home-manager switch --flake .#pi5-klaus'"
-echo "  kids:  ssh kids@192.168.1.219 'cd ~/nixfiles && git pull && home-manager switch --flake .#pi5-kids'"
+echo "  klaus: ssh klaus@192.168.1.219 'cd /opt/nixfiles && git pull && home-manager switch --flake .#pi5-klaus'"
+echo "  kids:  ssh klaus@192.168.1.219 'sudo -u kids home-manager switch --flake /opt/nixfiles#pi5-kids'"
 echo ""

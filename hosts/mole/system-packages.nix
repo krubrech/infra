@@ -22,7 +22,7 @@ with pkgs; [
   libretro.dolphin             # GameCube / Wii
 
   # Luanti (formerly Minetest)
-  minetest
+  luanti-client
 
   # Web browser
   firefox
@@ -38,6 +38,7 @@ with pkgs; [
   curl
   tree
   ncdu
+  nvim
 
   # Archive tools
   p7zip
@@ -49,5 +50,4 @@ with pkgs; [
   iftop
 
   # Media tools
-  vlc
 ]
