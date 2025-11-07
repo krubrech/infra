@@ -4,7 +4,11 @@
 #
 # To apply: sudo nix profile install --profile /nix/var/nix/profiles/default --file ./system-packages.nix
 
-{ pkgs ? import <nixpkgs> { system = "aarch64-linux"; } }:
+{ pkgs ? import <nixpkgs> {
+    system = "aarch64-linux";
+    config.allowUnfree = true;
+  }
+}:
 
 with pkgs; [
   # Gaming - RetroArch with cores
@@ -24,15 +28,8 @@ with pkgs; [
   # Luanti (formerly Minetest)
   luanti-client
 
-  # Web browser
-  firefox
-
-  # File manager
-  xfce.thunar
-
   # System utilities
   htop
-  vim
   git
   wget
   curl
