@@ -55,6 +55,24 @@
       ];
       # ./modules/nixbuild.nix
 
+      mole = mkHost "mole" "aarch64-linux" [
+        disko.nixosModules.disko
+        sops-nix.nixosModules.sops
+        home-manager.nixosModules.home-manager
+        ./modules/base.nix
+        ./modules/trusted-keys.nix
+        ./hosts/mole/disk.nix
+        ./hosts/mole/configuration.nix
+        {
+          # Configure home-manager for klaus and kids users on mole
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
+          home-manager.users.klaus = import ./hosts/mole/users/klaus.nix;
+          home-manager.users.kids = import ./hosts/mole/users/kids.nix;
+        }
+      ];
+
       # Add more servers here…
       # home-lab-1 = mkHost "home-lab-1" "aarch64-linux" [ ... ];
     };

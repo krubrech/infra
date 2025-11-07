@@ -1,9 +1,13 @@
 keys:
   - &admin_klaus age1sy0ghg9m0r3r5llp843a3nue68d0hr7604upyjrsu9d62sh7usgsplg698
   - &rabbit_host age12lhqgz30ffvpgcpml3xjp0vfvm3ggdypyknme3jqx3ful6rmsprsvjxytx
+  # TODO: Add mole host key after running infect.sh
+  # Get it with: ssh root@192.168.1.219 'cat /etc/ssh/ssh_host_ed25519_key.pub | ssh-to-age'
+  # - &mole_host ageXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age:
           - *admin_klaus
           - *rabbit_host
+          # - *mole_host  # Uncomment after adding mole's key above
