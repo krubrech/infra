@@ -131,15 +131,11 @@
   # RetroArch configuration directory for kids user
   # This will be managed through home-manager in users/kids.nix
 
-  # Hardware support for Raspberry Pi
-  hardware.raspberry-pi."5".apply-overlays-dtmerge.enable = true;
-  hardware.deviceTree.enable = true;
+  # Hardware support is handled by sd-image-aarch64.nix module
+  # No need for explicit Pi hardware config
 
   # Enable OpenGL for gaming
-  hardware.graphics = {
-    enable = true;
-    enable32Bit = false;  # Raspberry Pi is 64-bit only
-  };
+  hardware.graphics.enable = true;
 
   # Audio support
   hardware.pulseaudio.enable = false;
