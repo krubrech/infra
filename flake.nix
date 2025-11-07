@@ -56,12 +56,11 @@
       # ./modules/nixbuild.nix
 
       mole = mkHost "mole" "aarch64-linux" [
-        disko.nixosModules.disko
+        # Note: disko not used for SD card images
         sops-nix.nixosModules.sops
         home-manager.nixosModules.home-manager
         ./modules/base.nix
         ./modules/trusted-keys.nix
-        ./hosts/mole/disk.nix
         ./hosts/mole/configuration.nix
         {
           # Configure home-manager for klaus and kids users on mole
@@ -80,5 +79,9 @@
     # VM for testing rabbit configuration
     packages.x86_64-linux.rabbit-vm =
       self.nixosConfigurations.rabbit.config.system.build.vmWithBootLoader;
+
+    # SD card image for Raspberry Pi mole
+    packages.aarch64-linux.mole-sd-image =
+      self.nixosConfigurations.mole.config.system.build.sdImage;
   };
 }

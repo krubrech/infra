@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Generic script to install NixOS on a host using nixos-anywhere
 # Converts existing OS -> NixOS in-place
+# Note: For Raspberry Pi, use build-image.sh instead
 #
 # Usage: ./infect.sh <hostname> [user]
 
@@ -19,6 +20,21 @@ get_host_ip() {
             echo "Unknown host: $1" >&2
             echo "Available hosts: rabbit, mole" >&2
             exit 1
+            ;;
+    esac
+}
+
+# Function to get host architecture
+get_host_arch() {
+    case "$1" in
+        rabbit|hetzner-pony)
+            echo "x86_64-linux"
+            ;;
+        mole)
+            echo "aarch64-linux"
+            ;;
+        *)
+            echo "unknown"
             ;;
     esac
 }
@@ -43,6 +59,25 @@ HOSTNAME="$1"
 USER="${2:-root}"
 IP=$(get_host_ip "$HOSTNAME")
 HOST="$USER@$IP"
+ARCH=$(get_host_arch "$HOSTNAME")
+
+# Check if this is a Raspberry Pi (ARM) - nixos-anywhere doesn't work well with these
+if [ "$ARCH" = "aarch64-linux" ]; then
+    echo "=================================================="
+    echo "  ERROR: Cannot use nixos-anywhere for Raspberry Pi"
+    echo "=================================================="
+    echo ""
+    echo "Host '$HOSTNAME' is a Raspberry Pi (ARM-based system)."
+    echo "The nixos-anywhere kexec method doesn't work reliably on Raspberry Pi"
+    echo "due to special bootloader requirements."
+    echo ""
+    echo "Instead, you need to:"
+    echo "  1. Build an SD card image:  ./build-image.sh $HOSTNAME"
+    echo "  2. Flash it to SD card:     ./burn-image.sh $HOSTNAME /dev/sdX"
+    echo "  3. Boot the Raspberry Pi from the SD card"
+    echo ""
+    exit 1
+fi
 
 echo "=================================================="
 echo "  NixOS Installation via nixos-anywhere"
@@ -50,6 +85,7 @@ echo "=================================================="
 echo "Target:   $HOSTNAME ($IP)"
 echo "SSH User: $USER"
 echo "Config:   .#$HOSTNAME"
+echo "Arch:     $ARCH"
 echo ""
 echo "WARNING: This will wipe $HOSTNAME and install NixOS!"
 echo "         All existing data will be lost!"
