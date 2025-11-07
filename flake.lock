@@ -69,10 +69,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1762507137,
-        "narHash": "sha256-qhXZDNZxy54362AaYjcVZffb8y7DXU9hAzGfxUss1nM=",
+        "lastModified": 1762510033,
+        "narHash": "sha256-gOua+Ymj49RzlYR6FVdhw5yO/JDgAkpU8vKXWyZgOjs=",
         "ref": "refs/heads/main",
-        "rev": "ee96d4ac9de022140d909272082abddca2ef55a0",
+        "rev": "f9053200c65563f577aa84644dc07004870901a2",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/krubrech/nixfiles.git"

@@ -6,10 +6,6 @@
   home.homeDirectory = "/home/kids";
   home.stateVersion = "25.05";
 
-  # Minimal nix config for kids user
-  nix.package = lib.mkForce pkgs.nix;
-  nix.settings = {};
-
   # No additional packages - everything provided by system
   home.packages = [];
 
