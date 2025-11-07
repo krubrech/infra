@@ -55,7 +55,7 @@
     desktopManager.xfce.enable = true;
     displayManager.lightdm = {
       enable = true;
-      # Auto-login kids user to RetroArch
+      # Auto-login kids user
       autoLogin = {
         enable = true;
         user = "kids";
@@ -63,13 +63,8 @@
     };
   };
 
-  # Custom session for kids user that launches RetroArch
-  services.displayManager.sessionCommands = ''
-    # Launch RetroArch in fullscreen for kids user
-    if [ "$USER" = "kids" ]; then
-      ${pkgs.retroarch}/bin/retroarch --fullscreen &
-    fi
-  '';
+  # Note: RetroArch auto-launch for kids user is handled via
+  # the .xsession file in hosts/mole/users/kids.nix
 
   # Create klaus user (admin)
   users.users.klaus = {
