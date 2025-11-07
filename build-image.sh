@@ -63,9 +63,11 @@ echo "Building with QEMU emulation (slower) or remote builder if configured."
 echo ""
 
 # Build the SD image
+# Add --show-trace if you need to debug evaluation errors
 nix build ".#nixosConfigurations.$HOSTNAME.config.system.build.sdImage" \
   --system "$ARCH" \
-  --extra-platforms "$ARCH"
+  --extra-platforms "$ARCH" \
+  ${SHOW_TRACE:+--show-trace}
 
 echo ""
 echo "=================================================="

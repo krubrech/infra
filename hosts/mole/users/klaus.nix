@@ -11,8 +11,7 @@
 
   # Gaming-specific additions for mole
   home.packages = with pkgs; [
-    # RetroArch tools and utilities
-    steam-run  # For running non-NixOS binaries if needed
+    # Note: steam-run removed - requires i686/32-bit x86 libs (not available on ARM)
 
     # File management for ROMs
     p7zip
