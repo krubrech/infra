@@ -8,13 +8,26 @@
 set -e
 
 # Configuration
-PI_USER="${1:-pi@192.168.1.219}"
-KLAUS_GITHUB="https://github.com/krubrech/nixfiles.git"
+PI_USER="${1:-klaus@192.168.1.219}"
+KLAUS_GITHUB="git@github.com:krubrech/nixfiles.git"
 
 echo "=================================================="
 echo "  Raspberry Pi 5 Nix Setup"
 echo "=================================================="
 echo "Target: $PI_USER"
+echo ""
+
+# Step 0: Install SSH key if not already present
+echo "Step 0/6: Installing SSH key for passwordless access..."
+if ssh -o PasswordAuthentication=no -o ConnectTimeout=5 "$PI_USER" exit 2>/dev/null; then
+  echo "SSH key already installed, skipping..."
+else
+  echo "Installing SSH key (you'll need to enter password once)..."
+  SSH_KEY=$(cat ~/.ssh/id_ed25519.pub)
+  ssh "$PI_USER" "mkdir -p ~/.ssh && echo '$SSH_KEY' >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys"
+  echo "SSH key installed! All subsequent commands will be passwordless."
+fi
+
 echo ""
 
 # Step 1: Install Nix on the Pi
@@ -31,6 +44,13 @@ ssh "$PI_USER" 'bash' <<'EOF'
     . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
     echo "Nix installed successfully!"
+  fi
+
+  # Enable experimental features permanently
+  echo "Enabling experimental features in nix.conf..."
+  sudo mkdir -p /etc/nix
+  if ! grep -q "experimental-features" /etc/nix/nix.conf 2>/dev/null; then
+    echo "experimental-features = nix-command flakes" | sudo tee -a /etc/nix/nix.conf
   fi
 EOF
 
@@ -70,7 +90,7 @@ ssh "$PI_USER" 'bash' <<'EOF'
   . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
   echo "Installing system packages to /nix/var/nix/profiles/default..."
-  sudo nix profile install \
+  sudo nix --extra-experimental-features 'nix-command flakes' profile install \
     --profile /nix/var/nix/profiles/default \
     --file /tmp/system-packages.nix
 
@@ -87,7 +107,7 @@ ssh "$PI_USER" 'bash' <<'EOF'
   . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
   # Install home-manager for current user
-  nix run home-manager/master -- init --switch
+  nix --extra-experimental-features 'nix-command flakes' run home-manager/master -- init --switch
 
   echo "home-manager installed!"
 EOF
@@ -95,41 +115,51 @@ EOF
 # Step 5: Setup klaus user home-manager
 echo ""
 echo "Step 5/6: Setting up klaus user..."
-ssh "$PI_USER" 'sudo -u klaus bash' <<EOF
-  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
-  # Clone nixfiles repo
-  if [ ! -d /home/klaus/nixfiles ]; then
-    git clone $KLAUS_GITHUB /home/klaus/nixfiles
-  else
-    cd /home/klaus/nixfiles && git pull
-  fi
+# Use SSH agent forwarding to clone from GitHub without copying keys
+# Need to preserve SSH_AUTH_SOCK when using sudo
+ssh -A "$PI_USER" 'bash' <<EOF
+  AUTH_SOCK=\$SSH_AUTH_SOCK
 
-  # Install home-manager and apply pi5-klaus config
-  nix run home-manager/master -- init
-  cd /home/klaus/nixfiles
-  home-manager switch --flake .#pi5-klaus
+  sudo -u klaus bash -c "
+    export SSH_AUTH_SOCK=\$AUTH_SOCK
+    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
-  echo "klaus home-manager configured!"
+    # Add GitHub to known_hosts
+    mkdir -p /home/klaus/.ssh
+    ssh-keyscan github.com >> /home/klaus/.ssh/known_hosts 2>/dev/null
+
+    # Clone nixfiles repo (using forwarded SSH agent)
+    if [ ! -d /home/klaus/nixfiles ]; then
+      git clone $KLAUS_GITHUB /home/klaus/nixfiles
+    else
+      cd /home/klaus/nixfiles && git pull
+    fi
+
+    # Make nixfiles readable by all users so kids can access it
+    chmod -R o+rX /home/klaus/nixfiles
+
+    # Install home-manager and apply pi5-klaus config
+    nix run home-manager/master -- init
+    . /home/klaus/.nix-profile/etc/profile.d/hm-session-vars.sh
+    cd /home/klaus/nixfiles
+    home-manager switch --flake .#pi5-klaus
+
+    echo 'klaus home-manager configured!'
+  "
 EOF
 
 # Step 6: Setup kids user home-manager
 echo ""
 echo "Step 6/6: Setting up kids user..."
-ssh "$PI_USER" 'sudo -u kids bash' <<EOF
+
+# Kids user will use klaus's nixfiles (no need for separate clone)
+ssh "$PI_USER" 'sudo -u kids bash' <<'EOF'
   . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
-  # Clone nixfiles repo for kids
-  if [ ! -d /home/kids/nixfiles ]; then
-    git clone $KLAUS_GITHUB /home/kids/nixfiles
-  else
-    cd /home/kids/nixfiles && git pull
-  fi
-
-  # Install home-manager and apply pi5-kids config
-  nix run home-manager/master -- init
-  cd /home/kids/nixfiles
-  home-manager switch --flake .#pi5-kids
+  # Apply pi5-kids config from klaus's nixfiles directly
+  # This will install home-manager as part of the switch
+  nix run home-manager/master -- switch --flake /home/klaus/nixfiles#pi5-kids
 
   echo "kids home-manager configured!"
 EOF

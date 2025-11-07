@@ -27,7 +27,7 @@ ssh "$PI_USER" 'bash' <<'EOF'
   . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
   echo "Installing updated packages to /nix/var/nix/profiles/default..."
-  sudo nix profile install \
+  sudo nix --extra-experimental-features 'nix-command flakes' profile install \
     --profile /nix/var/nix/profiles/default \
     --file /tmp/system-packages.nix
 
