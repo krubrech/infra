@@ -38,7 +38,7 @@ with pkgs; [
   curl
   tree
   ncdu
-  nvim
+  neovim
 
   # Archive tools
   p7zip
