@@ -136,9 +136,6 @@ ssh -A "$PI_USER" 'bash' <<EOF
       cd /home/klaus/nixfiles && git pull
     fi
 
-    # Make nixfiles readable by all users so kids can access it
-    chmod -R o+rX /home/klaus/nixfiles
-
     # Install home-manager and apply pi5-klaus config
     nix run home-manager/master -- init
     . /home/klaus/.nix-profile/etc/profile.d/hm-session-vars.sh
