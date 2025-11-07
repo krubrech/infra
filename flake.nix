@@ -55,22 +55,23 @@
       ];
       # ./modules/nixbuild.nix
 
-      mole = mkHost "mole" "aarch64-linux" [
-        # Note: disko not used for SD card images
-        sops-nix.nixosModules.sops
-        home-manager.nixosModules.home-manager
-        ./modules/base.nix
-        ./modules/trusted-keys.nix
-        ./hosts/mole/configuration.nix
-        {
-          # Configure home-manager for klaus and kids users on mole
-          home-manager.useGlobalPkgs = false;  # Use separate pkgs to avoid i686 evaluation on ARM
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = { inherit inputs; };
-          home-manager.users.klaus = import ./hosts/mole/users/klaus.nix;
-          home-manager.users.kids = import ./hosts/mole/users/kids.nix;
-        }
-      ];
+      # Raspberry Pi 5 (mole) - Using Raspberry Pi OS + Nix (not full NixOS)
+      # See hosts/mole/setup-pi.sh for installation
+      # NixOS config kept for reference but commented out due to Pi 5 compatibility issues
+      # mole = mkHost "mole" "aarch64-linux" [
+      #   sops-nix.nixosModules.sops
+      #   home-manager.nixosModules.home-manager
+      #   ./modules/base.nix
+      #   ./modules/trusted-keys.nix
+      #   ./hosts/mole/configuration.nix
+      #   {
+      #     home-manager.useGlobalPkgs = false;
+      #     home-manager.useUserPackages = true;
+      #     home-manager.extraSpecialArgs = { inherit inputs; };
+      #     home-manager.users.klaus = import ./hosts/mole/users/klaus.nix;
+      #     home-manager.users.kids = import ./hosts/mole/users/kids.nix;
+      #   }
+      # ];
 
       # Add more servers here…
       # home-lab-1 = mkHost "home-lab-1" "aarch64-linux" [ ... ];
@@ -80,8 +81,8 @@
     packages.x86_64-linux.rabbit-vm =
       self.nixosConfigurations.rabbit.config.system.build.vmWithBootLoader;
 
-    # SD card image for Raspberry Pi mole
-    packages.aarch64-linux.mole-sd-image =
-      self.nixosConfigurations.mole.config.system.build.sdImage;
+    # SD card image build disabled - using Raspberry Pi OS + Nix instead
+    # packages.aarch64-linux.mole-sd-image =
+    #   self.nixosConfigurations.mole.config.system.build.sdImage;
   };
 }
