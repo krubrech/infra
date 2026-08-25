@@ -51,18 +51,6 @@
         ./hosts/koura/hardware-configuration.nix
       ];
 
-      hetzner-pony = mkHost "pony" "x86_64-linux" [
-        disko.nixosModules.disko
-        sops-nix.nixosModules.sops
-        ./modules/base.nix
-        ./modules/wireguard.nix
-        ./modules/nginx.nix
-        ./modules/apps.nix
-        ./hosts/hetzner-pony/disk.nix
-        ./hosts/hetzner-pony/hardware-configuration.nix
-        ./hosts/hetzner-pony/configuration.nix
-      ];
-
       rabbit = mkHost "rabbit" "x86_64-linux" [
         disko.nixosModules.disko
         sops-nix.nixosModules.sops
