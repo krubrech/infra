@@ -77,8 +77,8 @@
     executable = true;
     text = ''
       #!/bin/sh
-      # Launch RetroArch in fullscreen
-      exec ${pkgs.retroarch}/bin/retroarch --fullscreen
+      # Launch RetroArch in fullscreen (nixGL-wrapped version from system profile)
+      exec retroarch --fullscreen
     '';
   };
 

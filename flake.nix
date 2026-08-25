@@ -13,9 +13,19 @@
     nixfiles.inputs.nixpkgs.follows = "nixpkgs";
     nixfiles.inputs.home-manager.follows = "home-manager";
 
-    # Optional project flakes (declare as many as you want; can be private via SSH)
-    # inputs.my-phx-app.url = "github:YOUR_ORG/phoenix-app";
-    # inputs.nextjs-site.url = "github:YOUR_ORG/nextjs-site";
+    # The apps co-hosted on the koura box. Only each one's *systemd units*
+    # come from here — every release ships into its own Nix profile from its
+    # own repo (`bin/deploy-app` there), so evaluating or rebuilding a host
+    # never compiles an app, and shipping an app never rebuilds a host.
+    #
+    # These repos may be private: nixos-rebuild evaluates locally and hands the
+    # derivation to --build-host, so the box never fetches them itself.
+    koura.url = "git+ssh://git@github.com/krubrech/koura";
+    koura.inputs.nixpkgs.follows = "nixpkgs";
+    invoice-sync.url = "git+ssh://git@github.com/krubrech/invoice_sync";
+    invoice-sync.inputs.nixpkgs.follows = "nixpkgs";
+    kai.url = "git+ssh://git@github.com/krubrech/kai";
+    kai.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, disko, sops-nix, home-manager, nixfiles, ... }@inputs:
@@ -29,6 +39,18 @@
     };
   in {
     nixosConfigurations = {
+      # The rented box: koura, invoice_sync and kai behind one nginx.
+      # Everything the three apps are not — Postgres, Typesense, TLS, the
+      # firewall, their sops secrets — is in hosts/koura/configuration.nix.
+      koura = mkHost "koura" "x86_64-linux" [
+        sops-nix.nixosModules.sops
+        inputs.koura.nixosModules.koura
+        inputs.invoice-sync.nixosModules.invoice-sync
+        inputs.kai.nixosModules.kai
+        ./hosts/koura/configuration.nix
+        ./hosts/koura/hardware-configuration.nix
+      ];
+
       hetzner-pony = mkHost "pony" "x86_64-linux" [
         disko.nixosModules.disko
         sops-nix.nixosModules.sops
@@ -76,6 +98,37 @@
       # Add more servers here…
       # home-lab-1 = mkHost "home-lab-1" "aarch64-linux" [ ... ];
     };
+
+    # The tools the scripts in bin/ need. octoDNS's deSEC provider is not in
+    # nixpkgs, so it is packaged in nix/octodns-desec.nix and injected through
+    # withProviders — built against the same octodns the wrapper bundles.
+    devShells = lib.genAttrs systems (system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+        octodnsWithDesec = pkgs.octodns.withProviders (ps: [
+          (ps.callPackage ./nix/octodns-desec.nix { })
+        ]);
+      in
+      {
+        default = pkgs.mkShell {
+          name = "infra";
+          packages = [
+            octodnsWithDesec        # bin/dns  — DNS-as-code for codecanoe.com
+            pkgs.hcloud             # bin/provision — creates the Hetzner VM
+            pkgs.nixos-rebuild      # ./deploy.sh <host>
+            pkgs.sops               # secrets/*, .sops.env
+            pkgs.age
+            pkgs.jq
+            pkgs.git
+            pkgs.openssh
+          ];
+
+          shellHook = ''
+            export PATH="$PWD/bin:$PATH"
+            echo "infra — ./deploy.sh <host> to rebuild, bin/dns for DNS"
+          '';
+        };
+      });
 
     # VM for testing rabbit configuration
     packages.x86_64-linux.rabbit-vm =

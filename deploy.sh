@@ -9,6 +9,11 @@ set -e
 # Function to get host details
 get_host_info() {
     case "$1" in
+        koura)
+            # The rented box (koura, invoice_sync and kai). Reached by name
+            # rather than IP: that is the name its host key is known under.
+            echo "koura.codecanoe.com"
+            ;;
         rabbit)
             echo "91.98.95.99"
             ;;
@@ -17,7 +22,7 @@ get_host_info() {
             ;;
         *)
             echo "Unknown host: $1" >&2
-            echo "Available hosts: rabbit, mole" >&2
+            echo "Available hosts: koura, rabbit, mole" >&2
             exit 1
             ;;
     esac
@@ -28,7 +33,7 @@ if [ $# -lt 1 ]; then
     echo "Usage: $0 <hostname> [mode]"
     echo ""
     echo "Arguments:"
-    echo "  hostname  - Name of the host to deploy (rabbit, mole)"
+    echo "  hostname  - Name of the host to deploy (koura, rabbit, mole)"
     echo "  mode      - Deployment mode: switch (default), boot, or test"
     echo ""
     echo "Modes:"

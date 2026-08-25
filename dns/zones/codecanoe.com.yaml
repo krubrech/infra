@@ -1,0 +1,96 @@
+# codecanoe.com zone — the source of truth. Edit here, then `bin/dns` to
+# preview and `bin/dns --doit` to push to deSEC.
+#
+# TTL defaults to 3600 (config.yaml). deSEC enforces a 3600s minimum, so
+# don't set anything lower.
+#
+# Records mirrored from Namecheap on migration:
+#   - A records: from the Advanced DNS host table.
+#   - MX (Google Workspace): these were NOT in Namecheap's host table — they
+#     lived under the "Mail Settings" preset, which stops working once the
+#     nameservers move. Recreated explicitly here. DO NOT DROP or mail breaks.
+#   - TXT: google-site-verification + the github challenge.
+---
+'':
+  - type: A
+    value: 75.2.60.5
+  # deSEC auto-manages the apex NS. Declared here so octoDNS sees no diff
+  # and never tries to delete them (which would break delegation).
+  - type: NS
+    values:
+      - ns1.desec.io.
+      - ns2.desec.org.
+  - type: MX
+    values:
+      - exchange: aspmx.l.google.com.
+        preference: 1
+      - exchange: alt1.aspmx.l.google.com.
+        preference: 5
+      - exchange: alt2.aspmx.l.google.com.
+        preference: 5
+      - exchange: aspmx2.googlemail.com.
+        preference: 10
+      - exchange: aspmx3.googlemail.com.
+        preference: 10
+  - type: TXT
+    values:
+      - google-site-verification=MM8hvTaOGmSq0VkDI4VvEmfAZdZiL2lcgXGpQhzcXpM
+      - google-site-verification=Db94IMSWnfvzzQ36yT2oQJ-2kQqVJiB1sgEJlJkdJ4E
+
+_github-challenge-codecanoe:
+  type: TXT
+  value: '28a59cc964'
+
+dev:
+  type: A
+  value: 95.85.5.136
+
+headscale:
+  type: A
+  value: 91.98.95.99
+
+headscale-dev:
+  type: A
+  value: 188.245.169.52
+
+# invoice_sync, co-hosted on the koura box — same IP as `koura` below.
+# `invoices` (plural) is a different, older host; the two are unrelated.
+invoice:
+  type: A
+  value: 167.235.244.90
+
+invoices:
+  type: A
+  value: 46.101.145.101
+
+# kai, also co-hosted on the koura box.
+kai:
+  type: A
+  value: 167.235.244.90
+
+koura:
+  type: A
+  value: 167.235.244.90
+
+okato:
+  type: A
+  value: 128.140.117.86
+
+# Resend (outbound app mail for koura) — DKIM key + SPF on the custom
+# return-path subdomain `send`. Values come from the Resend dashboard/API
+# (domain codecanoe.com, region eu-west-1); mail breaks if these are dropped.
+resend._domainkey:
+  type: TXT
+  value: p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDQ1Uf1f/4g6gvX0m8VTrzlN6yHGccO/4g2lPzvgM+HIKhsMvbrfFfVjSzi+B7vcpcK/qS3Pef6I+XNmHiEExa0UzdCZuaJYPQaqEM3hGSbv/iAx11t3NJsYd2++yx6RRGzmMHTQnV45XXgr0c6Op7b7lglnaWRWKZMhElZHIC98QIDAQAB
+
+send:
+  - type: MX
+    value:
+      exchange: feedback-smtp.eu-west-1.amazonses.com.
+      preference: 10
+  - type: TXT
+    value: v=spf1 include:amazonses.com ~all
+
+www:
+  type: A
+  value: 75.2.60.5

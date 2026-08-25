@@ -21,10 +21,12 @@ hardware-configuration.nix.backup
 *.fd
 *.img
 
-# Secrets and credentials
-secrets/
+# Encrypted secrets ARE committed — that is the point of sops. Only plaintext
+# is dangerous, and none of it is written here.
 *.age
 *.secret
+# Decrypted output, if anyone ever redirects sops -d to a file by accident.
+*.plain
 
 # WireGuard client configs (contain private keys)
 wireguard-client.conf

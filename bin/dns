@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# DNS-as-code for codecanoe.com — octoDNS driving deSEC.
+#
+#   bin/dns          # dry-run: print the plan (what would change on deSEC)
+#   bin/dns --doit   # apply the plan
+#
+# Needs $DESEC_TOKEN in the environment (exported from .sops.env on shell
+# entry; see dns/README.md). octoDNS + the deSEC provider come from the Nix
+# devshell — no pip, no venv.
+set -euo pipefail
+# Run from dns/ so YamlProvider's `directory: ./zones` resolves correctly
+# (octoDNS reads it relative to the working directory, not the config file).
+cd "$(dirname "$0")/../dns"
+
+if [ -z "${DESEC_TOKEN:-}" ]; then
+  echo "DESEC_TOKEN is not set. Add it with:  sops .sops.env   (then: direnv reload)" >&2
+  exit 1
+fi
+
+exec octodns-sync --config-file config.yaml "$@"

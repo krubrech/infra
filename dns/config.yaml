@@ -1,0 +1,27 @@
+# DNS-as-code for codecanoe.com — octoDNS driving deSEC.
+#
+#   bin/dns          # dry-run: show the diff deSEC would receive
+#   bin/dns --doit   # apply
+#
+# The API token comes from $DESEC_TOKEN, exported on shell entry from the
+# sops-encrypted .sops.env (add a `DESEC_TOKEN=...` line via `sops .sops.env`).
+#
+# `config` is the source of truth (dns/zones/*.yaml). `desec` is the target.
+# octoDNS computes the diff and only touches what changed.
+
+providers:
+  config:
+    class: octodns.provider.yaml.YamlProvider
+    directory: ./zones
+    default_ttl: 3600
+    enforce_order: true
+  desec:
+    class: octodns_desec.DesecProvider
+    token: env/DESEC_TOKEN
+
+zones:
+  codecanoe.com.:
+    sources:
+      - config
+    targets:
+      - desec

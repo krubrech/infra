@@ -5,6 +5,19 @@ keys:
   # Get it with: ssh root@192.168.1.219 'cat /etc/ssh/ssh_host_ed25519_key.pub | ssh-to-age'
   # - &mole_host ageXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 creation_rules:
+  # Per-host production secrets, consumed by sops-nix on the box. Encrypted to
+  # the admin key only: the box holds that same private key at
+  # /var/lib/sops-nix/age/keys.txt, placed there by bin/provision.
+  - path_regex: secrets/koura/.*
+    key_groups:
+      - age:
+          - *admin_klaus
+  # Dev-shell secrets — DESEC_TOKEN for bin/dns, HCLOUD_TOKEN for
+  # bin/provision. Decrypted by .envrc on shell entry.
+  - path_regex: \.sops\.env$
+    key_groups:
+      - age:
+          - *admin_klaus
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - age:

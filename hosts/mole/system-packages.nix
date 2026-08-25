@@ -10,9 +10,27 @@
   }
 }:
 
+let
+  # On Raspberry Pi OS (non-NixOS), GPU drivers are in system paths
+  # We create simple wrappers that set LD_LIBRARY_PATH to find them
+  # This is the standard approach for Nix-on-non-NixOS setups
+
+  retroarch-wrapped = pkgs.writeShellScriptBin "retroarch" ''
+    export LD_LIBRARY_PATH="/usr/lib/aarch64-linux-gnu:/usr/lib:$LD_LIBRARY_PATH"
+    exec ${pkgs.retroarch}/bin/retroarch "$@"
+  '';
+
+  luanti-wrapped = pkgs.writeShellScriptBin "luanti" ''
+    export LD_LIBRARY_PATH="/usr/lib/aarch64-linux-gnu:/usr/lib:$LD_LIBRARY_PATH"
+    exec ${pkgs.luanti-client}/bin/luanti "$@"
+  '';
+in
+
 with pkgs; [
-  # Gaming - RetroArch with cores
-  retroarch
+  # LD_LIBRARY_PATH-wrapped graphical applications
+  # These wrappers allow Nix packages to find system GPU drivers
+  retroarch-wrapped
+  luanti-wrapped
 
   # RetroArch cores for various systems
   libretro.beetle-psx-hw       # PlayStation 1
@@ -23,10 +41,20 @@ with pkgs; [
   libretro.nestopia            # NES
   libretro.beetle-pce-fast     # PC Engine/TurboGrafx-16
   libretro.gambatte            # Game Boy / Game Boy Color
-  libretro.dolphin             # GameCube / Wii
 
-  # Luanti (formerly Minetest)
-  luanti-client
+  # Graphics and audio libraries for RetroArch
+  mesa
+  libdrm
+  libGL
+  libGLU
+  vulkan-loader
+  vulkan-headers
+  SDL2
+  alsa-lib
+  pulseaudio
+  wayland
+  wayland-protocols
+  libxkbcommon
 
   # System utilities
   htop
@@ -46,5 +74,9 @@ with pkgs; [
   nmap
   iftop
 
+  # Desktop applications
+  firefox
+
   # Media tools
+  vlc
 ]
