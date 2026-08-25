@@ -96,27 +96,6 @@
         "url": "ssh://git@github.com/krubrech/invoice_sync"
       }
     },
-    "invoice-sync_2": {
-      "inputs": {
-        "nixpkgs": [
-          "koura",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1786729718,
-        "narHash": "sha256-Uz8VIJLEmunSbAYiSLb40YBwO7EZ6ht+1UnpDBd7Ryw=",
-        "ref": "refs/heads/main",
-        "rev": "dd5d6b593e40bdb77d8a30a59461856709def36e",
-        "revCount": 8,
-        "type": "git",
-        "url": "ssh://git@github.com/krubrech/invoice_sync"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/krubrech/invoice_sync"
-      }
-    },
     "kai": {
       "inputs": {
         "nixpkgs": [
@@ -124,32 +103,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787659990,
-        "narHash": "sha256-Pz1w3YRxfQN4rnyDAw7O5TF295kupuJDEExr9DuW/vk=",
+        "lastModified": 1787679581,
+        "narHash": "sha256-IbIEHZt1r9z1eERMRh/bGNPoMGPLBi8W1J7iruNbqBI=",
         "ref": "refs/heads/main",
-        "rev": "c87ff0b1c3663a5482cfc4f05827dfb054607127",
-        "revCount": 6,
-        "type": "git",
-        "url": "ssh://git@github.com/krubrech/kai"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/krubrech/kai"
-      }
-    },
-    "kai_2": {
-      "inputs": {
-        "nixpkgs": [
-          "koura",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1787659990,
-        "narHash": "sha256-Pz1w3YRxfQN4rnyDAw7O5TF295kupuJDEExr9DuW/vk=",
-        "ref": "refs/heads/main",
-        "rev": "c87ff0b1c3663a5482cfc4f05827dfb054607127",
-        "revCount": 6,
+        "rev": "21b0b136edfffe4bac66a6d77f56631ee9a127cd",
+        "revCount": 7,
         "type": "git",
         "url": "ssh://git@github.com/krubrech/kai"
       },
@@ -161,19 +119,17 @@
     "koura": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "invoice-sync": "invoice-sync_2",
-        "kai": "kai_2",
         "nixpkgs": [
           "nixpkgs"
         ],
         "sops-nix": "sops-nix"
       },
       "locked": {
-        "lastModified": 1787660075,
-        "narHash": "sha256-Wkv2f7DvN/s1JkCEvsHlQ2ZGLFve3mn4sGAhxLJqw8E=",
+        "lastModified": 1787679601,
+        "narHash": "sha256-lHhtfd0vyiBfsXyaoxqIZLLIehs6xqCXZ57XhULZ2Gc=",
         "ref": "refs/heads/main",
-        "rev": "60b60b35326f2ba9f88df149004908d145ff6bc8",
-        "revCount": 28,
+        "rev": "7963a64bb8b4575a908a403b29c82f77784f2b2f",
+        "revCount": 30,
         "type": "git",
         "url": "ssh://git@github.com/krubrech/koura"
       },
