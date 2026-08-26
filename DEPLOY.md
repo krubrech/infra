@@ -21,9 +21,9 @@ app, and an app deploy never rebuilds the box.**
 ## Deploying a system change
 
 ```sh
-./deploy.sh koura                # switch now, built on the box
-./deploy.sh koura boot           # stage for next reboot
-./deploy.sh koura test           # activate without persisting
+./infra.sh deploy koura          # switch now, built on the box
+./infra.sh deploy koura boot     # stage for next reboot
+./infra.sh deploy koura test     # activate without persisting
 ```
 
 Atomic, with automatic rollback if the new generation fails to boot
@@ -32,19 +32,19 @@ restarts only the units named in its `restartUnits`.
 
 ## First install
 
-`bin/provision` converts a stock Ubuntu VM to NixOS **in place** with
+`./infra.sh setup koura` converts a stock Ubuntu VM to NixOS **in place** with
 [`nixos-infect`](https://github.com/elitak/nixos-infect).
 
 > **Why infect and not nixos-anywhere?** Hetzner's recent Ubuntu images boot
 > UEFI with Secure Boot on, which blocks kexec of the unsigned NixOS installer
 > (`PEFILE: Unsigned PE binary`). nixos-infect never kexecs — it replaces the
 > OS on the running system and keeps the image's partition layout. Secure Boot
-> must still be **off** for the infected system to boot; `bin/provision`
-> checks before touching anything.
+> must still be **off** for the infected system to boot; setup checks before
+> touching anything.
 
 ```sh
 sops .sops.env      # HCLOUD_TOKEN for the project the box lives in
-bin/provision
+./infra.sh setup koura
 ```
 
 It creates the VM (matching a local `~/.ssh` key against the project by
@@ -53,8 +53,9 @@ generated `hosts/koura/hardware-configuration.nix` back into this repo,
 installs the age key at `/var/lib/sops-nix/age/keys.txt` so the box can
 decrypt `secrets/koura/*`, then builds and switches `.#koura` on the box.
 
-Flags: `--existing` adopts a server that already exists (re-running is always
-safe — completed steps are skipped); `--primary-ipv4 <id-or-name>` attaches an
+Options are passed straight through to `bin/provision`, the Hetzner backend:
+`--existing` adopts a server that already exists (re-running is always safe —
+completed steps are skipped); `--primary-ipv4 <id-or-name>` attaches an
 existing primary IP so DNS keeps pointing somewhere real. To free an old box's
 IP first: `hcloud primary-ip update <id> --auto-delete=false`, delete the
 server, then pass it here.
@@ -98,7 +99,7 @@ Edit with `sops secrets/koura/koura.env`, commit, deploy. `.sops.yaml`
 re-encrypts to the right recipient; sops-nix restarts the affected units.
 
 The box holds the same age identity used for the dev shell, at
-`/var/lib/sops-nix/age/keys.txt` (0400), put there by `bin/provision`. Nothing
+`/var/lib/sops-nix/age/keys.txt` (0400), put there at setup. Nothing
 about a secret is box-specific, so a reprovision needs no re-encryption.
 
 **Basic auth is not optional in practice.** Neither kai nor invoice_sync has a
@@ -156,7 +157,7 @@ Updating them rebuilds the machine, so do it deliberately:
 
 ```sh
 nix flake update nixpkgs sops-nix
-./deploy.sh koura boot      # stage it, reboot when you are watching
+./infra.sh deploy koura boot   # stage it, reboot when you are watching
 ```
 
 An out-of-step `sops-nix` fails at *evaluation*, not at runtime — the giveaway

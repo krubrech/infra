@@ -102,8 +102,8 @@
           name = "infra";
           packages = [
             octodnsWithDesec        # bin/dns  — DNS-as-code for codecanoe.com
-            pkgs.hcloud             # bin/provision — creates the Hetzner VM
-            pkgs.nixos-rebuild      # ./deploy.sh <host>
+            pkgs.hcloud             # infra.sh setup — creates the Hetzner VM
+            pkgs.nixos-rebuild      # infra.sh deploy <host>
             pkgs.sops               # secrets/*, .sops.env
             pkgs.age
             pkgs.jq
@@ -113,7 +113,7 @@
 
           shellHook = ''
             export PATH="$PWD/bin:$PATH"
-            echo "infra — ./deploy.sh <host> to rebuild, bin/dns for DNS"
+            echo "infra — ./infra.sh hosts, ./infra.sh deploy <host>, ./infra.sh dns"
           '';
         };
       });

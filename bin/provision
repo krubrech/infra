@@ -1,38 +1,38 @@
 #!/usr/bin/env bash
-# Provision the Koura production server on Hetzner Cloud.
+# Create a Hetzner Cloud VM and turn it into one of this repo's NixOS hosts.
 #
-# Creates an Ubuntu VM and converts it to NixOS *in place* with nixos-infect
-# (no kexec, no disk reformat — the approach borrowed from ~/personal/devpool).
-# Then pulls the generated hardware-configuration.nix back into the repo,
-# installs the sops age key (so the box can decrypt secrets/koura/*), and
-# deploys the full koura host config. Safe to re-run after a partial
-# failure: it skips steps that are already done (server exists, already
-# NixOS, age key present).
+# Converts the stock Ubuntu image to NixOS *in place* with nixos-infect (no
+# kexec, no reformat — DEPLOY.md has the why). Then pulls the generated
+# hardware-configuration.nix back into hosts/<host>/, installs the sops age
+# key so the box can decrypt secrets/<host>/*, and deploys .#<host>. Safe to
+# re-run after a partial failure: it skips steps that are already done (server
+# exists, already NixOS, age key present).
+#
+# Normally reached as `./infra.sh setup <host>`.
 #
 # Prerequisites:
-#   - hcloud CLI with HCLOUD_TOKEN for the *Koura* Hetzner project
+#   - hcloud CLI with HCLOUD_TOKEN for the Hetzner project the box lives in
 #     (add it to .sops.env: `sops .sops.env`)
 #   - the sops age key at ~/.config/sops/age/keys.txt (or SOPS_AGE_KEY_FILE)
 #
 # Usage:
-#   bin/provision [OPTIONS]
+#   bin/provision <host> [OPTIONS]
 #
 # Options:
 #   --ssh-key       Hetzner SSH key name. Default: auto — match a local
 #                   ~/.ssh public key against the project by fingerprint,
 #                   uploading it first if it isn't there yet
-#   --name          Server name (default: koura)
 #   --location      Hetzner location (default: fsn1)
 #   --server-type   Hetzner server type (default: cx23)
 #   --primary-ipv4  Existing primary IP (id or name) to attach — lets you
 #                   reuse the old box's IP so DNS keeps working
-#   --existing      Server <name> already exists; skip creation and infect it
+#   --existing      The server already exists; skip creation and infect it
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # --- Configuration ---
 
-SERVER_NAME="koura"
+SERVER_NAME=""
 LOCATION="fsn1"
 SERVER_TYPE="cx23"
 SSH_KEY_NAME=""
@@ -43,7 +43,6 @@ EXISTING=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --name)         SERVER_NAME="$2"; shift 2 ;;
     --location)     LOCATION="$2"; shift 2 ;;
     --server-type)  SERVER_TYPE="$2"; shift 2 ;;
     --ssh-key)      SSH_KEY_NAME="$2"; shift 2 ;;
@@ -53,9 +52,16 @@ while [[ $# -gt 0 ]]; do
       awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"
       exit 0
       ;;
-    *) echo "Unknown argument: $1"; exit 1 ;;
+    -*) echo "Unknown option: $1"; exit 1 ;;
+    *)  [ -z "$SERVER_NAME" ] || { echo "One host at a time (got '$SERVER_NAME' and '$1')"; exit 1; }
+        SERVER_NAME="$1"; shift ;;
   esac
 done
+
+# The Hetzner server is named after the host, so hosts/<name>/ and
+# secrets/<name>/ are where everything else about it lives.
+[ -n "$SERVER_NAME" ] || { echo "Usage: bin/provision <host> [OPTIONS]"; exit 1; }
+HOST_DIR="hosts/$SERVER_NAME"
 
 log() { echo "[provision] $(date -u +%H:%M:%S) $*"; }
 
@@ -66,9 +72,10 @@ remote() { ssh "${SSH_OPTS[@]}" "root@$SERVER_IP" "$@"; }
 
 # --- Preflight checks ---
 
+[ -d "$HOST_DIR" ] || { log "ERROR: $HOST_DIR does not exist — declare the machine first"; exit 1; }
 command -v hcloud >/dev/null 2>&1 || { log "ERROR: hcloud not found (enter the dev shell)"; exit 1; }
 command -v jq >/dev/null 2>&1 || { log "ERROR: jq not found"; exit 1; }
-git rev-parse --is-inside-work-tree >/dev/null || { log "ERROR: not in the koura git repo"; exit 1; }
+git rev-parse --is-inside-work-tree >/dev/null || { log "ERROR: not in the infra git repo"; exit 1; }
 
 # Hetzner requires an SSH key at creation time (otherwise it mails a root
 # password and we can't get in). Unless --ssh-key names one explicitly, find
@@ -90,7 +97,7 @@ resolve_ssh_key() {
   for pub in "$HOME"/.ssh/id_ed25519.pub "$HOME"/.ssh/id_rsa.pub; do
     [ -r "$pub" ] || continue
     SSH_KEY_NAME=$(cut -d' ' -f3- "$pub" | tr ' ' '-')
-    SSH_KEY_NAME=${SSH_KEY_NAME:-koura-deploy}
+    SSH_KEY_NAME=${SSH_KEY_NAME:-$SERVER_NAME-deploy}
     log "Uploading $pub to Hetzner as '$SSH_KEY_NAME'..."
     hcloud ssh-key create --name "$SSH_KEY_NAME" --public-key-from-file "$pub" >/dev/null
     return 0
@@ -112,7 +119,7 @@ else
     --image "ubuntu-24.04"
     --location "$LOCATION"
     --ssh-key "$SSH_KEY_NAME"
-    --label "koura=prod"
+    --label "infra=$SERVER_NAME"
   )
   if [ -n "$PRIMARY_IPV4" ]; then
     CREATE_ARGS+=(--primary-ipv4 "$PRIMARY_IPV4")
@@ -237,18 +244,18 @@ fi
 # modules, root fs) for the disk layout it inherited from the Ubuntu image.
 # The flake imports it, so it must live in the repo and be git-tracked.
 
-log "Fetching /etc/hosts/koura/hardware-configuration.nix into nixos/..."
-remote "cat /etc/hosts/koura/hardware-configuration.nix" > hosts/koura/hardware-configuration.nix
-git add hosts/koura/hardware-configuration.nix
+log "Fetching /etc/nixos/hardware-configuration.nix into $HOST_DIR/..."
+remote "cat /etc/nixos/hardware-configuration.nix" > "$HOST_DIR/hardware-configuration.nix"
+git add "$HOST_DIR/hardware-configuration.nix"
 log "Saved (remember to commit it)."
 
 # --- Step 6: Install the sops age key (only if missing) ---
 #
-# Prod secrets themselves live encrypted in the repo (secrets/koura/*) and
+# Prod secrets themselves live encrypted in the repo (secrets/<host>/*) and
 # are decrypted on the box by sops-nix at activation. All the box needs is
 # the age private key — the same identity that decrypts .sops.env in the
 # dev shell. We drop it out of band here; sops-nix reads it from
-# /var/lib/sops-nix/age/keys.txt (see hosts/koura/configuration.nix).
+# /var/lib/sops-nix/age/keys.txt (see $HOST_DIR/configuration.nix).
 
 AGE_KEY_FILE="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
 if remote "test -s /var/lib/sops-nix/age/keys.txt" 2>/dev/null; then
@@ -256,7 +263,7 @@ if remote "test -s /var/lib/sops-nix/age/keys.txt" 2>/dev/null; then
 elif [ -r "$AGE_KEY_FILE" ]; then
   log "Installing sops age key from $AGE_KEY_FILE..."
   remote "umask 077 && mkdir -p /var/lib/sops-nix/age && cat > /var/lib/sops-nix/age/keys.txt" < "$AGE_KEY_FILE"
-  log "Age key installed — sops-nix will decrypt secrets/koura/* on the box."
+  log "Age key installed — sops-nix will decrypt secrets/$SERVER_NAME/* on the box."
 else
   log "ERROR: sops age key not found at $AGE_KEY_FILE."
   log "  Set SOPS_AGE_KEY_FILE to its path, or place it there, then re-run"
@@ -268,7 +275,7 @@ fi
 #
 # Builds on the server (its uplink is much faster than pushing a closure from
 # here). Evaluation happens locally, so untracked files are invisible — the
-# git add above matters. The app itself is not in this closure (step 8).
+# git add above matters. No app is in this closure; see below.
 
 log "Deploying flake config (builds on the server)..."
 export NIX_SSHOPTS="${SSH_OPTS[*]}"
@@ -280,55 +287,49 @@ rebuild() {
   fi
 }
 rc=0
-rebuild switch --flake .#koura \
+rebuild switch --flake ".#$SERVER_NAME" \
   --target-host "root@$SERVER_IP" \
   --build-host "root@$SERVER_IP" || rc=$?
 if [ "$rc" -eq 4 ]; then
   log "WARNING: switch completed but some units failed to start — inspect with:"
-  log "  ssh root@$SERVER_IP journalctl -u koura -u typesense -u nginx -e"
+  log "  ssh root@$SERVER_IP journalctl -xe"
 elif [ "$rc" -ne 0 ]; then
   log "ERROR: nixos-rebuild failed (exit $rc)"
   exit "$rc"
 fi
 
-# --- Step 8: Deploy the app into its profile ---
-#
-# The mix release is decoupled from the system closure: the koura unit runs
-# whatever /nix/var/nix/profiles/koura points at, and skips (ConditionPath-
-# Exists) until that profile exists. NIX_SSHOPTS is still exported, so
-# deploy-app's ssh calls inherit the relaxed host-key options.
-
-log "Deploying the app (first build compiles the whole release locally — takes a while)..."
-bin/deploy-app "root@$SERVER_IP"
-
 # --- Done ---
+#
+# There is deliberately no app deploy here. A release is not part of a host's
+# closure: each app builds its own and ships it into /nix/var/nix/profiles/<app>
+# from its own repo, and its unit skips (ConditionPathExists) until that
+# profile exists. So a fresh box comes up with its units idle, and every app
+# lands independently afterwards.
 
 cat <<DONE
 
 ============================================
-  Koura production server
-  Name:  $SERVER_NAME
-  IP:    $SERVER_IP
+  $SERVER_NAME
+  IP:  $SERVER_IP
 ============================================
 
 Next steps:
 
-1. Commit the generated hardware config:
-     git add hosts/koura/hardware-configuration.nix && git commit
+1. Commit the generated hardware config — flakes only see git-tracked files,
+   and the host will not build without it:
+     git add $HOST_DIR/hardware-configuration.nix && git commit
 
-2. Point DNS at $SERVER_IP (or attach the old primary IP), then check:
-     curl -I https://<domain>/
+2. Point DNS at $SERVER_IP (or attach the old primary IP):
+     ./infra.sh dns            # preview
+     ./infra.sh dns --doit     # apply
 
-3. Create the Typesense collection + backfill (first run downloads the
-   ~500 MB embedding model, give it a few minutes):
-     ssh root@$SERVER_IP
-     set -a; . /run/secrets/koura.env; set +a
-     export TYPESENSE_HOST=127.0.0.1 TYPESENSE_PORT=8108 TYPESENSE_PROTOCOL=http
-     export RELEASE_COOKIE=unused RELEASE_DISTRIBUTION=none
-     export DATABASE_SOCKET_DIR=/run/postgresql DATABASE_USER=koura DATABASE_NAME=koura
-     /nix/var/nix/profiles/koura/bin/koura eval 'Application.ensure_all_started(:req); {:ok, _} = Koura.Typesense.create_collection(Koura.Typesense.Schema.listings_collection(), timeout_ms: 300_000)'
+3. Ship each app from its own repo:
+     bin/deploy-app root@$SERVER_IP
 
-Subsequent updates:
-  app code    -> bin/deploy-app root@$SERVER_IP   (fast: no nixos-rebuild)
-  hosts/koura/* etc -> ./deploy.sh koura
+   Anything an app needs on top of that — a search index to populate, a
+   database to seed — is in that repo's DEPLOY.md.
+
+Afterwards:
+  app code   -> bin/deploy-app, in the app's repo (fast: no nixos-rebuild)
+  the box    -> ./infra.sh deploy $SERVER_NAME
 DONE
